@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/actions_id"
+        android:icon="@drawable/ic_more_vert_black_24dp"
+        android:title="options"
+        app:showAsAction="always">
+
+    <menu>
+        <item
+            android:id="@+id/import_id"
+            android:title="Import"
+            android:icon="@drawable/ic_file_download_black_24dp"
+            app:showAsAction="ifRoom|withText"/>
+
+        <item
+            android:id="@+id/export_id"
+            android:icon="@drawable/ic_file_upload_black_24dp"
+            android:title="export"
+            app:showAsAction="ifRoom|withText"/>
+        <item
+            android:id="@+id/aboutus_id"
+            android:icon="@drawable/ic_developer_mode_black_24dp"
+            android:title="Developers Email"
+            app:showAsAction="ifRoom|withText">
+
+            <menu>
+                <item
+                    android:title="Email.. kugizh@gmail.com"
+                    android:id="@+id/developer_email"
+                    android:icon="@drawable/ic_email_black_24dp"
+                    />
+
+            </menu>
+
+        </item>
+
+    </menu>
+
+
+
+    </item>
+
+
+
+
+</menu>
