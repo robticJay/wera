@@ -2,9 +2,12 @@ package comercial.authority.com.exceltools;
 
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -34,26 +37,29 @@ public class SendingActivity extends AppCompatActivity {
     EditText editText8;
     EditText editText9;
     EditText editText10;
-    Button button,clear,retrieve;
-    private static final String DB_URL="jdbc:mysql://192.168.43.217/data_base_name_here";
-    private static final String USER= "zzz";
-    private static final String PASS= "1234";
+    Button button, clear, retrieve;
+    private static final String DB_URL = "jdbc:mysql://192.168.43.217/data_base_name_here";
+    private static final String USER = "zzz";
+    private static final String PASS = "1234";
 
     private ResultSet resultSet = null;
     private Statement statment = null;
     private Connection connect = null;
+    private String TAG = "readDatabase";
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sending);
+        if (android.os.Build.VERSION.SDK_INT >=15) {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolBar);
+        Toolbar toolbar =  findViewById(R.id.toolBar);
         toolbar.setTitle("Excel tool");
         setSupportActionBar(toolbar);
-
-
 
 
         textView = findViewById(R.id.textView);
@@ -69,9 +75,9 @@ public class SendingActivity extends AppCompatActivity {
         editText9 = findViewById(R.id.editText9);
         editText10 = findViewById(R.id.editText10);
 
-        button =findViewById(R.id.button);
-        clear =findViewById(R.id.clear);
-        retrieve =findViewById(R.id.retrieve);
+        button = findViewById(R.id.button);
+        clear = findViewById(R.id.clear);
+        retrieve = findViewById(R.id.retrieve);
 
 
         button.setOnClickListener(new View.OnClickListener() {
@@ -100,7 +106,6 @@ public class SendingActivity extends AppCompatActivity {
                 editText10.setText("");
 
 
-
             }
         });
 
@@ -109,13 +114,11 @@ public class SendingActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 Send send = new Send();
-               send.readDatabase();
-
+                send.readDatabase();
 
 
             }
         });
-
 
 
     }
@@ -124,7 +127,7 @@ public class SendingActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu,menu);
+        inflater.inflate(R.menu.menu, menu);
         return true;
 
     }
@@ -133,9 +136,9 @@ public class SendingActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.import_id:
-                Intent intent =new Intent(SendingActivity.this,MainActivity.class);
+                Intent intent = new Intent(SendingActivity.this, MainActivity.class);
                 startActivity(intent);
                 break;
             case R.id.export_id:
@@ -149,7 +152,7 @@ public class SendingActivity extends AppCompatActivity {
 
 
             default:
-                    return super.onOptionsItemSelected(item);
+                return super.onOptionsItemSelected(item);
 
         }
         return true;
@@ -159,14 +162,19 @@ public class SendingActivity extends AppCompatActivity {
     private void changeDataIntoExcelFile() {
 
 
-
     }
 
-    private class Send extends AsyncTask<String,String,String>{
+    //writing and retrieving data are running in two diffrent threads in tis class
+    /*
+     @runInBackground() &  readDatabase();
+    */
 
 
 
-        String msg ="" ;
+    private class Send extends AsyncTask<String, String, String> {
+
+
+        String msg = "";
         String text = editText.getText().toString();
         String text1 = editText1.getText().toString();
         String text2 = editText2.getText().toString();
@@ -180,28 +188,27 @@ public class SendingActivity extends AppCompatActivity {
         String text10 = editText10.getText().toString();
 
 
-
         @Override
         protected String doInBackground(String... strings) {
             try {
                 Class.forName("com.mysql.jdbc.Driver");
-                Connection con = DriverManager.getConnection(DB_URL,USER,PASS);
-                if (con==null){
-                    msg= "connection goes wrong";
-                }
-                else {
+                Connection con = DriverManager.getConnection(DB_URL, USER, PASS);
+                if (con == null) {
+                    msg = "connection goes wrong";
+                } else {
                     String query = "INSERT INTO data_base_table_here(col_name_index,col_stud_name,col_mark_one,col_mark_two,col_mark_three,col_mark_four,col_mark_five,col_mark_six,col_mark_seven,col_mark_eight,col_mark_nine)" +
-                            " VALUES('"+text+"','"+text1+"','"+text2+"','"+text3+"','"+text4+"','"+text5+"','"+text6+"','"+text7+"','"+text8+"','"+text9+"','"+text10+"');";
-                    Statement statement =con.createStatement();
+                            " VALUES('" + text + "','" + text1 + "','" + text2 + "','" + text3 + "','" + text4 + "','" + text5 + "','" + text6 + "','" + text7 + "','" + text8 + "','" + text9 + "','" + text10 + "');";
+                    Statement statement = con.createStatement();
                     statement.execute(query);
+
                     msg = "insert successful";
                 }
                 con.close();
             } catch (ClassNotFoundException e) {
-                msg="problems my friend";
+                msg = "problems my friend";
                 e.printStackTrace();
             } catch (SQLException e) {
-                msg=e.getMessage();
+                msg = e.getMessage();
                 e.printStackTrace();
             }
 
@@ -218,58 +225,107 @@ public class SendingActivity extends AppCompatActivity {
         protected void onPostExecute(String s) {
             textView.setText(msg);
         }
-        public void readDatabase(){
+
+        public void readDatabase() {
+            Log.d(TAG,"READDATABASE is started");
 
             try {
-                connect = DriverManager.getConnection(DB_URL,USER,PASS);
-                Statement statement = connect.createStatement();
-                ResultSet resultSet =statement.executeQuery("select * from data_base_table_here");
-                writeResultSet(resultSet);
+                Thread thread = new Thread() {
+                    @Override
+                    public void run() {
+
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    Class.forName("com.mysql.jdbc.Driver");
+                                    connect = DriverManager.getConnection(DB_URL, USER, PASS);
+                                    Statement statement = connect.createStatement();
+                                    ResultSet resultSet = statement.executeQuery("SELECT * FROM data_base_table_here");
+
+                                    //polpulate the edit text fields with data from the recent row
+
+                                    while (resultSet.next()){
+                                        String i = resultSet.getString(1);
+                                        String s  = resultSet.getString(2);
+                                        String o = resultSet.getString(3);
+                                        String t = resultSet.getString(4);
+                                        String th = resultSet.getString(5);
+                                        String f = resultSet.getString(6);
+                                        String fv = resultSet.getString(7);
+                                        String sx = resultSet.getString(8);
+                                        String sv = resultSet.getString(9);
+                                        String e = resultSet.getString(10);
+                                        String n = resultSet.getString(11);
+
+
+                                        editText.setText(i);
+                                        editText1.setText(s);
+                                        editText2.setText(o);
+                                        editText3.setText(t);
+                                        editText4.setText(th);
+                                        editText5.setText(f);
+                                        editText6.setText(fv);
+                                        editText7.setText(sx);
+                                        editText8.setText(sv);
+                                        editText9.setText(e);
+                                        editText10.setText(n);
+
+
+
+                                       // Toast.makeText(SendingActivity.this, "resultset"+" "+ i +" "+ s  +" "+  o  +" "+  t  +" "+  th  +" "+  f  +" "+  fv  +" "+  sx  +" "+  sv  +" "+  e  +" "+  n , Toast.LENGTH_SHORT).show();
+                                    }
+
+
+                                } catch (ClassNotFoundException e) {
+                                    Log.d(TAG,e.getMessage());
+                                    e.printStackTrace();
+                                    Toast.makeText(SendingActivity.this, "" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                } catch (SQLException e) {
+                                    e.printStackTrace();
+                                    Toast.makeText(SendingActivity.this, "" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                } finally {
+                                    close();
+                                }
+
+
+                            }
+
+
+                        });
+
+
+                    }
+
+
+                };
+                thread.start();
+            }catch (Exception e){
+                Toast.makeText(SendingActivity.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
+
+
+        private void close() {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                if (statment != null) {
+                    statment.close();
+                }
+                if (connect != null) {
+                    connect.close();
+                }
             } catch (SQLException e) {
-                msg=e.getMessage();
-            }finally {
-                close();
+                e.printStackTrace();
             }
-
-
         }
-    }
-
-
-
-    private void writeResultSet(ResultSet resultSet) throws SQLException {
-
-        while (resultSet.next()){
-
-            editText.setText (resultSet.getString(1));
-            editText.setText (resultSet.getString(2));
-            editText.setText (resultSet.getString(3));
-            editText.setText (resultSet.getString(4));
-            editText.setText (resultSet.getString(5));
-            editText.setText (resultSet.getString(6));
-            editText.setText (resultSet.getString(7));
-            editText.setText (resultSet.getString(8));
-            editText.setText (resultSet.getString(9));
-            editText.setText (resultSet.getString(10));
-            editText.setText (resultSet.getString(11));
 
         }
 
 
     }
-    private void close(){
-        try {
-            if (resultSet !=null){
-                resultSet.close();
-            }
-            if (statment!= null){
-                statment.close();
-            }
-            if (connect!= null){
-                connect.close();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-}
+
+
